@@ -1,5 +1,14 @@
 type Point = { x: number; y: number };
-
+type Tool =
+  | { id: string; kind: "brush" }
+  | { id: string; emoji: string; kind: "sticker" };
+const tools: Tool[] = [
+  { id: "emoji1", emoji: "emoji1", kind: "sticker" },
+  { id: "emoji2", emoji: "emoji12", kind: "sticker" },
+  { id: "emoji3", emoji: "emoji13", kind: "sticker" },
+  { id: "brush", kind: "brush" },
+];
+let currentTool = "brush";
 interface DrawCommand {
   draw(ctx: CanvasRenderingContext2D): void;
 }
@@ -33,6 +42,20 @@ function makeStroke(
     },
   };
 }
+function makeSticker(
+  x: number,
+  y: number,
+  emoji: string,
+): DrawCommand {
+  return {
+    draw(ctx) {
+      ctx.save();
+      ctx.fillText(emoji, x, y);
+      ctx.restore();
+    },
+  };
+}
+
 const committed: DrawCommand[] = [];
 const redoStack: DrawCommand[] = [];
 const undoStack: DrawCommand[] = [];
@@ -70,6 +93,14 @@ const strokePlus = document.createElement("button");
 strokePlus.textContent = "Size+";
 const strokeMinus = document.createElement("button");
 strokeMinus.textContent = "Size -";
+const emojiButton1 = document.createElement("button");
+emojiButton1.textContent = "emoji1";
+const emojiButton2 = document.createElement("button");
+emojiButton2.textContent = "emoji2";
+const emojiButton3 = document.createElement("button");
+emojiButton3.textContent = "emoji3";
+const brush = document.createElement("button");
+brush.textContent = "brush";
 debugPanel.append(
   debugSummary,
   clearPixelsButton,
@@ -78,6 +109,10 @@ debugPanel.append(
   redoButton,
   strokePlus,
   strokeMinus,
+  emojiButton1,
+  emojiButton2,
+  emojiButton3,
+  brush,
 );
 
 app.append(heading, instructions, canvas, debugPanel);
@@ -138,13 +173,19 @@ function cancelGesture() {
 }
 
 canvas.addEventListener("pointerdown", (e) => {
-  canvas.setPointerCapture(e.pointerId);
-  activeGesture = {
-    points: [toDocPoint(e)],
-    width: strokeWidth,
-    color: "#0ef3d0",
-  };
-  requestRender();
+  const tool = tools.find((t) => t.id === currentTool)!;
+  if (!tool) return;
+  if (tool.kind == "brush") {
+    canvas.setPointerCapture(e.pointerId);
+    activeGesture = {
+      points: [toDocPoint(e)],
+      width: strokeWidth,
+      color: "#0ef3d0",
+    };
+    requestRender();
+  } else if (tool.kind == "sticker") {
+    addObj(makeSticker(toDocPoint(e).x, toDocPoint(e).y, tool.emoji));
+  }
 });
 
 canvas.addEventListener("pointermove", (e) => {
@@ -187,4 +228,17 @@ strokePlus.addEventListener("click", () => {
 
 strokeMinus.addEventListener("click", () => {
   strokeWidth -= 1;
+});
+
+emojiButton1.addEventListener("click", () => {
+  currentTool = "emoji1";
+});
+emojiButton2.addEventListener("click", () => {
+  currentTool = "emoji2";
+});
+emojiButton3.addEventListener("click", () => {
+  currentTool = "emoji3";
+});
+brush.addEventListener("click", () => {
+  currentTool = "brush";
 });
