@@ -39,7 +39,7 @@ const undoStack: DrawCommand[] = [];
 
 type ActiveStroke = { points: Point[]; width: number; color: string };
 let activeGesture: ActiveStroke | null = null;
-
+let strokeWidth = 4;
 const app = document.querySelector<HTMLElement>("#app")!;
 
 const heading = document.createElement("h1");
@@ -66,12 +66,18 @@ const undoButton = document.createElement("button");
 undoButton.textContent = "Undo";
 const redoButton = document.createElement("button");
 redoButton.textContent = "Redo";
+const strokePlus = document.createElement("button");
+strokePlus.textContent = "Size+";
+const strokeMinus = document.createElement("button");
+strokeMinus.textContent = "Size -";
 debugPanel.append(
   debugSummary,
   clearPixelsButton,
   redrawButton,
   undoButton,
   redoButton,
+  strokePlus,
+  strokeMinus,
 );
 
 app.append(heading, instructions, canvas, debugPanel);
@@ -133,7 +139,11 @@ function cancelGesture() {
 
 canvas.addEventListener("pointerdown", (e) => {
   canvas.setPointerCapture(e.pointerId);
-  activeGesture = { points: [toDocPoint(e)], width: 4, color: "#0ef3d0" };
+  activeGesture = {
+    points: [toDocPoint(e)],
+    width: strokeWidth,
+    color: "#0ef3d0",
+  };
   requestRender();
 });
 
@@ -169,4 +179,12 @@ undoButton.addEventListener("click", () => {
 
 redoButton.addEventListener("click", () => {
   redo();
+});
+
+strokePlus.addEventListener("click", () => {
+  strokeWidth += 1;
+});
+
+strokeMinus.addEventListener("click", () => {
+  strokeWidth -= 1;
 });
