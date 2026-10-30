@@ -3,7 +3,6 @@ type Point = { x: number; y: number };
 interface DrawCommand {
   draw(ctx: CanvasRenderingContext2D): void;
 }
-
 function makeStroke(
   points: Point[],
   width: number,
@@ -12,7 +11,6 @@ function makeStroke(
   return {
     draw(ctx) {
       if (points.length === 0) return;
-
       ctx.save();
       ctx.lineWidth = width;
       ctx.strokeStyle = color;
@@ -35,8 +33,9 @@ function makeStroke(
     },
   };
 }
-
 const committed: DrawCommand[] = [];
+const redoStack: DrawCommand[] = [];
+const undoStack: DrawCommand[] = [];
 
 type ActiveStroke = { points: Point[]; width: number; color: string };
 let activeGesture: ActiveStroke | null = null;
@@ -63,11 +62,42 @@ const clearPixelsButton = document.createElement("button");
 clearPixelsButton.textContent = "Clear pixels";
 const redrawButton = document.createElement("button");
 redrawButton.textContent = "Redraw";
-debugPanel.append(debugSummary, clearPixelsButton, redrawButton);
+const undoButton = document.createElement("button");
+undoButton.textContent = "Undo";
+const redoButton = document.createElement("button");
+redoButton.textContent = "Redo";
+debugPanel.append(
+  debugSummary,
+  clearPixelsButton,
+  redrawButton,
+  undoButton,
+  redoButton,
+);
 
 app.append(heading, instructions, canvas, debugPanel);
 
 let renderQueued = false;
+
+function addObj(cmd: DrawCommand) {
+  committed.push(cmd);
+  undoStack.push(cmd);
+  redoStack.length = 0;
+  requestRender();
+}
+function undo() {
+  const input = undoStack.pop();
+  if (!input) return;
+  committed.pop();
+  redoStack.push(input);
+  requestRender();
+}
+function redo() {
+  const input = redoStack.pop();
+  if (!input) return;
+  committed.push(input);
+  undoStack.push(input);
+  requestRender();
+}
 
 function requestRender() {
   if (renderQueued) return;
@@ -117,8 +147,8 @@ canvas.addEventListener("pointerup", () => {
   if (!activeGesture) return;
   const { points, width, color } = activeGesture;
   // Placeholder: becomes commit(), which also clears redo (step 4)
-  committed.push(makeStroke([...points], width, color));
   activeGesture = null;
+  addObj(makeStroke([...points], width, color));
   requestRender();
 });
 
@@ -131,4 +161,12 @@ clearPixelsButton.addEventListener("click", () => {
 
 redrawButton.addEventListener("click", () => {
   render();
+});
+
+undoButton.addEventListener("click", () => {
+  undo();
+});
+
+redoButton.addEventListener("click", () => {
+  redo();
 });
