@@ -4,8 +4,8 @@ type Tool =
   | { id: string; emoji: string; kind: "sticker" };
 const tools: Tool[] = [
   { id: "emoji1", emoji: "emoji1", kind: "sticker" },
-  { id: "emoji2", emoji: "emoji12", kind: "sticker" },
-  { id: "emoji3", emoji: "emoji13", kind: "sticker" },
+  { id: "emoji2", emoji: "emoji2", kind: "sticker" },
+  { id: "emoji3", emoji: "emoji3", kind: "sticker" },
   { id: "brush", kind: "brush" },
 ];
 let currentTool = "brush";
@@ -115,10 +115,30 @@ debugPanel.append(
   brush,
 );
 
-app.append(heading, instructions, canvas, debugPanel);
+const userSpan = document.createElement("span");
+const userInput = document.createElement("input");
+userSpan.append(
+  userInput,
+);
+app.append(heading, instructions, canvas, debugPanel, userSpan);
 
 let renderQueued = false;
-
+function addUserText() {
+  const userButton = document.createElement("button");
+  const id = userInput.value;
+  const newUserTool: Tool = {
+    id: id,
+    emoji: userInput.value,
+    kind: "sticker",
+  };
+  tools.push(newUserTool);
+  userButton.textContent = userInput.value;
+  userButton.addEventListener("click", () => {
+    currentTool = id;
+    requestRender();
+  });
+  return userButton;
+}
 function addObj(cmd: DrawCommand) {
   committed.push(cmd);
   undoStack.push(cmd);
@@ -241,4 +261,9 @@ emojiButton3.addEventListener("click", () => {
 });
 brush.addEventListener("click", () => {
   currentTool = "brush";
+});
+userInput.addEventListener("keypress", (e) => {
+  if (e.key == "Enter") {
+    userSpan.append(addUserText());
+  }
 });
