@@ -101,6 +101,8 @@ const emojiButton3 = document.createElement("button");
 emojiButton3.textContent = "emoji3";
 const brush = document.createElement("button");
 brush.textContent = "brush";
+const exportButton = document.createElement("button");
+exportButton.textContent = "export";
 debugPanel.append(
   debugSummary,
   clearPixelsButton,
@@ -113,6 +115,7 @@ debugPanel.append(
   emojiButton2,
   emojiButton3,
   brush,
+  exportButton,
 );
 
 const userSpan = document.createElement("span");
@@ -168,7 +171,23 @@ function requestRender() {
     render();
   });
 }
-
+function exportDrawing() {
+  const newCanvas = document.createElement("canvas");
+  newCanvas.width = 1024;
+  newCanvas.height = 1024;
+  const canvasContext = newCanvas.getContext("2d")!;
+  canvasContext.scale(2, 2);
+  for (const i of committed) {
+    i.draw(canvasContext);
+  }
+  newCanvas.toBlob((blob) => {
+    if (!blob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "export.png";
+    a.click();
+  }, "image/png");
+}
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (const command of committed) command.draw(ctx);
@@ -217,7 +236,6 @@ canvas.addEventListener("pointermove", (e) => {
 canvas.addEventListener("pointerup", () => {
   if (!activeGesture) return;
   const { points, width, color } = activeGesture;
-  // Placeholder: becomes commit(), which also clears redo (step 4)
   activeGesture = null;
   addObj(makeStroke([...points], width, color));
   requestRender();
@@ -266,4 +284,7 @@ userInput.addEventListener("keypress", (e) => {
   if (e.key == "Enter") {
     userSpan.append(addUserText());
   }
+});
+exportButton.addEventListener("click", () => {
+  exportDrawing();
 });
