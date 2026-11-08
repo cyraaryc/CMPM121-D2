@@ -152,9 +152,8 @@ function addObj(cmd: DrawCommand) {
   requestRender();
 }
 function undo() {
-  const input = undoStack.pop();
+  const input = committed.pop();
   if (!input) return;
-  committed.pop();
   redoStack.push(input);
   requestRender();
 }
