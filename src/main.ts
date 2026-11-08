@@ -3,14 +3,27 @@ type Tool =
   | { id: string; kind: "brush" }
   | { id: string; emoji: string; kind: "sticker" };
 const tools: Tool[] = [
-  { id: "emoji1", emoji: "emoji1", kind: "sticker" },
-  { id: "emoji2", emoji: "emoji2", kind: "sticker" },
-  { id: "emoji3", emoji: "emoji3", kind: "sticker" },
+  { id: "emoji1", emoji: "😀", kind: "sticker" },
+  { id: "emoji2", emoji: "🙃", kind: "sticker" },
+  { id: "emoji3", emoji: "🤔", kind: "sticker" },
   { id: "brush", kind: "brush" },
 ];
 let currentTool = "brush";
 interface DrawCommand {
   draw(ctx: CanvasRenderingContext2D): void;
+}
+function renderButtons() {
+  const buttons = [];
+  for (const tool of tools) {
+    const button = document.createElement("button");
+    button.textContent = tool.id;
+    button.addEventListener("click", () => {
+      currentTool = tool.id;
+      requestRender();
+    });
+    buttons.push(button);
+  }
+  buttonSpan.replaceChildren(...buttons);
 }
 function makeStroke(
   points: Point[],
@@ -78,9 +91,9 @@ canvas.style.border = "1px solid #ec0101";
 canvas.style.touchAction = "none";
 const ctx = canvas.getContext("2d")!;
 
-const debugPanel = document.createElement("details");
+const debugPanel = document.createElement("span");
 const debugSummary = document.createElement("summary");
-debugSummary.textContent = "Debug";
+debugSummary.textContent = "Controls: Press Enter in input box to create tools";
 const clearPixelsButton = document.createElement("button");
 clearPixelsButton.textContent = "Clear pixels";
 const redrawButton = document.createElement("button");
@@ -93,14 +106,6 @@ const strokePlus = document.createElement("button");
 strokePlus.textContent = "Size+";
 const strokeMinus = document.createElement("button");
 strokeMinus.textContent = "Size -";
-const emojiButton1 = document.createElement("button");
-emojiButton1.textContent = "emoji1";
-const emojiButton2 = document.createElement("button");
-emojiButton2.textContent = "emoji2";
-const emojiButton3 = document.createElement("button");
-emojiButton3.textContent = "emoji3";
-const brush = document.createElement("button");
-brush.textContent = "brush";
 const exportButton = document.createElement("button");
 exportButton.textContent = "export";
 debugPanel.append(
@@ -111,23 +116,18 @@ debugPanel.append(
   redoButton,
   strokePlus,
   strokeMinus,
-  emojiButton1,
-  emojiButton2,
-  emojiButton3,
-  brush,
   exportButton,
 );
-
+const buttonSpan = document.createElement("span");
 const userSpan = document.createElement("span");
 const userInput = document.createElement("input");
 userSpan.append(
   userInput,
 );
-app.append(heading, instructions, canvas, debugPanel, userSpan);
+app.append(heading, instructions, canvas, debugPanel, userSpan, buttonSpan);
 
 let renderQueued = false;
 function addUserText() {
-  const userButton = document.createElement("button");
   const id = userInput.value;
   const newUserTool: Tool = {
     id: id,
@@ -138,12 +138,7 @@ function addUserText() {
     return;
   }
   tools.push(newUserTool);
-  userButton.textContent = userInput.value;
-  userButton.addEventListener("click", () => {
-    currentTool = id;
-    requestRender();
-  });
-  return userButton;
+  renderButtons();
 }
 function addObj(cmd: DrawCommand) {
   committed.push(cmd);
@@ -272,28 +267,13 @@ strokeMinus.addEventListener("click", () => {
   strokeWidth -= 1;
 });
 
-emojiButton1.addEventListener("click", () => {
-  currentTool = "emoji1";
-});
-emojiButton2.addEventListener("click", () => {
-  currentTool = "emoji2";
-});
-emojiButton3.addEventListener("click", () => {
-  currentTool = "emoji3";
-});
-brush.addEventListener("click", () => {
-  currentTool = "brush";
-});
 userInput.addEventListener("keypress", (e) => {
   if (e.key == "Enter") {
-    const userBtn = addUserText();
-    if (!userBtn) {
-      return;
-    }
-    userSpan.append(userBtn);
+    addUserText();
   }
 });
 exportButton.addEventListener("click", () => {
   exportDrawing();
 });
 render();
+renderButtons();
