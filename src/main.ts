@@ -134,6 +134,9 @@ function addUserText() {
     emoji: userInput.value,
     kind: "sticker",
   };
+  if (!id) {
+    return;
+  }
   tools.push(newUserTool);
   userButton.textContent = userInput.value;
   userButton.addEventListener("click", () => {
@@ -189,6 +192,8 @@ function exportDrawing() {
   }, "image/png");
 }
 function render() {
+  undoButton.disabled = undoStack.length == 0;
+  redoButton.disabled = redoStack.length == 0;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (const command of committed) command.draw(ctx);
   if (activeGesture) {
@@ -282,9 +287,14 @@ brush.addEventListener("click", () => {
 });
 userInput.addEventListener("keypress", (e) => {
   if (e.key == "Enter") {
-    userSpan.append(addUserText());
+    const userBtn = addUserText();
+    if (!userBtn) {
+      return;
+    }
+    userSpan.append(userBtn);
   }
 });
 exportButton.addEventListener("click", () => {
   exportDrawing();
 });
+render();
